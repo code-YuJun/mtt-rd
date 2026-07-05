@@ -3,4 +3,13 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
          version="6.0">
+    <!--登录校验过滤器-->
+    <filter>
+        <filter-name>loginFilter</filter-name>
+        <filter-class>com.yujun.mtt.filters.LoginFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>loginFilter</filter-name>
+        <url-pattern>/headline/*</url-pattern>
+    </filter-mapping>
 </web-app>

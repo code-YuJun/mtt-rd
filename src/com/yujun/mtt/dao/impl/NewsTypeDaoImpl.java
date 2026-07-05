@@ -13,6 +13,6 @@ import java.util.List;
 public class NewsTypeDaoImpl extends BaseDao implements NewsTypeDao {
     @Override
     public List<NewsType> findAll() {
-        return baseQuery(NewsType.class,"select * from news_type");
+        return baseQuery(NewsType.class,"select tid,tname from news_type");
     }
 }

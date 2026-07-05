@@ -117,4 +117,26 @@ public class NewsUserController extends BaseController{
         }
         WebUtil.writeJson(resp, result);
     }
+
+    /**
+     * 通过token检验用户登录是否过期
+     * @param req
+     * @param resp
+     * @throws ServletException
+     * @throws IOException
+     */
+    protected void checkLogin(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // 从请求头获取token
+        String token = req.getHeader("token");
+        // 默认未登录/过期
+        Result result = Result.build(null, ResultCodeEnum.NOTLOGIN);
+        if(null != token){
+            // token存在且未过期
+            if (!JwtHelper.isExpiration(token)) {
+                result=Result.ok(null);
+            }
+        }
+        // 返回JSON结果
+        WebUtil.writeJson(resp, result);
+    }
 }

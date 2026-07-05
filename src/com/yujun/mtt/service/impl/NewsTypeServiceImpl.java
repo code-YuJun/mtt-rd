@@ -12,9 +12,9 @@ import java.util.List;
  * Package: com.yujun.mtt.service.impl
  */
 public class NewsTypeServiceImpl implements NewsTypeService {
-    private NewsTypeDao typeDao = new NewsTypeDaoImpl();
+    private NewsTypeDao newsTypeDao = new NewsTypeDaoImpl();
     @Override
     public List<NewsType> findAll() {
-        return typeDao.findAll();
+        return newsTypeDao.findAll();
     }
 }

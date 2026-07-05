@@ -1,186 +1,310 @@
-# 微头条JavaWeb版本 - 后端
+# MTT-RD 新闻头条管理系统
 
-## 📁 项目概述
-这是一个基于Java Servlet的新闻管理系统（mtt-rd），采用传统MVC架构，使用Druid连接池、JWT认证、MySQL数据库。
+## 项目概述
 
-## 📂 目录结构
+MTT-RD 是一个基于 **Java 原生 Servlet + JDBC** 开发的新闻头条管理后端项目，采用经典的三层架构（Controller - Service - DAO），实现了新闻发布、浏览、用户注册登录、新闻分类管理等核心功能。
+
+项目通过 RESTful 风格的 JSON 接口对外提供服务，支持 JWT Token 认证、跨域处理、MD5 密码加密等安全机制。
+
+---
+
+## 技术栈
+
+| 技术/框架 | 版本 | 说明 |
+|-----------|------|------|
+| Java | 17+ | 开发语言 |
+| Jakarta Servlet | 6.0 | Web 核心规范（Tomcat 10.1+） |
+| JDBC | - | 原生数据库访问 |
+| MySQL | 8.0+ | 关系型数据库 |
+| Druid | 1.1.22 | 数据库连接池 |
+| Jackson | 2.13.2 | JSON 序列化/反序列化 |
+| JJWT | 0.10.1 | JWT Token 生成与校验 |
+| Lombok | 1.18.24 | 简化 POJO 代码 |
+| Tomcat | 10.1.52 | 应用服务器 |
+
+---
+
+## 项目结构
 
 ```
 mtt-rd/
-├── src/                          # 源代码目录
-│   ├── Main.java                 # 程序入口（示例代码）
-│   └── com/yujun/mtt/           # 主包
-│       ├── common/              # 公共类
-│       ├── controller/          # 控制器层
-│       ├── dao/                 # 数据访问层
-│       ├── filters/             # 过滤器
-│       ├── pojo/                # 实体类
-│       ├── service/             # 业务逻辑层
-│       └── util/                # 工具类
-├── resources/                   # 资源文件
-│   └── jdbc.properties         # 数据库配置
-├── web/                        # Web配置
+├── src/                              # 源代码目录
+│   ├── com/yujun/mtt/
+│   │   ├── common/                   # 通用返回结果封装
+│   │   │   ├── Result.java           # 统一响应结果对象
+│   │   │   └── ResultCodeEnum.java   # 响应状态码枚举
+│   │   ├── controller/               # 控制层（Servlet）
+│   │   │   ├── BaseController.java   # 基础控制器（反射分发请求）
+│   │   │   ├── NewsHeadlineController.java  # 新闻头条管理接口
+│   │   │   ├── NewsTypeController.java      # 新闻分类接口
+│   │   │   ├── NewsUserController.java      # 用户管理接口
+│   │   │   └── PortalController.java        # 门户公开接口
+│   │   ├── dao/                      # 数据访问层
+│   │   │   ├── BaseDao.java          # 基础 DAO（通用 CRUD）
+│   │   │   ├── NewsHeadLineDao.java
+│   │   │   ├── NewsTypeDao.java
+│   │   │   ├── NewsUserDao.java
+│   │   │   └── impl/                 # DAO 实现类
+│   │   ├── filters/                  # Servlet 过滤器
+│   │   │   ├── CrosFilter.java       # 跨域处理过滤器
+│   │   │   └── LoginFilter.java      # 登录认证过滤器
+│   │   ├── pojo/                     # 实体类 / VO 对象
+│   │   │   ├── NewsHeadline.java     # 新闻头条实体
+│   │   │   ├── NewsType.java         # 新闻分类实体
+│   │   │   ├── NewsUser.java         # 用户实体
+│   │   │   ├── HeadlineQueryVo.java  # 新闻分页查询 VO
+│   │   │   ├── HeadlinePageVo.java   # 新闻分页返回 VO
+│   │   │   └── HeadlineDetailVo.java # 新闻详情 VO
+│   │   ├── service/                  # 业务逻辑层
+│   │   │   ├── NewsHeadLineService.java
+│   │   │   ├── NewsTypeService.java
+│   │   │   ├── NewsUserService.java
+│   │   │   └── impl/                 # Service 实现类
+│   │   └── util/                     # 工具类
+│   │       ├── JDBCUtil.java         # JDBC 连接池工具（Druid）
+│   │       ├── JwtHelper.java        # JWT Token 工具
+│   │       ├── MD5Util.java          # MD5 加密工具
+│   │       └── WebUtil.java          # Web 请求/响应工具
+│   └── Main.java                     # 入口类（IDE 模板）
+├── resources/
+│   └── jdbc.properties               # 数据库连接配置
+├── web/                              # Web 应用根目录
 │   └── WEB-INF/
-│       ├── lib/                # 第三方依赖
-│       └── web.xml             # Web配置文件
-├── out/                        # 编译输出目录
-├── .gitignore                  # Git忽略配置
-└── mtt-rd.iml                  # IntelliJ IDEA项目文件
+│       ├── lib/                      # 第三方依赖 JAR 包
+│       └── web.xml                   # Web 应用配置（过滤器配置）
+├── out/                              # 编译输出目录
+├── mtt-rd.iml                        # IntelliJ IDEA 模块配置
+└── readme.md                         # 项目说明文档
 ```
 
-## 📄 文件作用详解
+---
 
-### 1. 配置文件
+## 数据库设计
 
-| 文件路径 | 作用 |
-|---------|------|
-| [resources/jdbc.properties](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/resources/jdbc.properties) | 数据库连接配置，包含MySQL连接信息、连接池参数 |
-| [web/WEB-INF/web.xml](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/web/WEB-INF/web.xml) | Web应用配置文件（当前为空配置） |
-| [.gitignore](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/.gitignore) | Git版本控制忽略规则配置 |
+项目使用 MySQL 数据库，默认库名为 `mtt`，包含以下核心表：
 
-### 2. 公共类
+### 1. news_user（用户表）
 
-| 文件路径 | 作用 |
-|---------|------|
-| [common/Result.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/common/Result.java) | 全局统一返回结果类，封装API响应格式 |
-| [common/ResultCodeEnum.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/common/ResultCodeEnum.java) | 返回码枚举类，定义系统状态码 |
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| uid | INT | 主键，自增 |
+| username | VARCHAR | 用户名（唯一） |
+| user_pwd | VARCHAR | 密码（MD5 加密存储） |
+| nick_name | VARCHAR | 用户昵称 |
 
-### 3. 控制器层
+### 2. news_headline（新闻头条表）
 
-| 文件路径 | 作用 |
-|---------|------|
-| [controller/BaseController.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/controller/BaseController.java) | 基础控制器，通过反射实现RESTful路由分发 |
-| [controller/NewsHeadlineController.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/controller/NewsHeadlineController.java) | 新闻头条控制器，处理头条相关请求 |
-| [controller/NewsTypeController.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/controller/NewsTypeController.java) | 新闻类型控制器，处理新闻分类请求 |
-| [controller/NewsUserController.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/controller/NewsUserController.java) | 用户控制器，处理用户相关请求 |
-| [controller/PortalController.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/controller/PortalController.java) | 门户控制器，处理门户页面请求 |
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| hid | INT | 主键，自增 |
+| title | VARCHAR | 新闻标题 |
+| article | TEXT | 新闻正文 |
+| type | INT | 新闻类型 ID（关联 news_type） |
+| publisher | INT | 发布人 ID（关联 news_user） |
+| page_views | INT | 浏览量 |
+| create_time | DATETIME | 创建时间 |
+| update_time | DATETIME | 更新时间 |
+| is_deleted | INT | 逻辑删除标志（0-未删除，1-已删除） |
 
-### 4. 数据访问层
+### 3. news_type（新闻分类表）
 
-| 文件路径 | 作用 |
-|---------|------|
-| [dao/BaseDao.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/dao/BaseDao.java) | 基础DAO接口，提供通用数据访问方法 |
-| [dao/NewsHeadLineDao.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/dao/NewsHeadLineDao.java) | 新闻头条DAO接口 |
-| [dao/NewsTypeDao.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/dao/NewsTypeDao.java) | 新闻类型DAO接口 |
-| [dao/NewsUserDao.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/dao/NewsUserDao.java) | 用户DAO接口 |
-| [dao/impl/NewsHeadLineDaoImpl.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/dao/impl/NewsHeadLineDaoImpl.java) | 新闻头条DAO实现类 |
-| [dao/impl/NewsTypeDaoImpl.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/dao/impl/NewsTypeDaoImpl.java) | 新闻类型DAO实现类 |
-| [dao/impl/NewsUserDaoImpl.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/dao/impl/NewsUserDaoImpl.java) | 用户DAO实现类 |
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| tid | INT | 主键，自增 |
+| tname | VARCHAR | 分类名称 |
 
-### 5. 实体类
+---
 
-| 文件路径 | 作用 |
-|---------|------|
-| [pojo/NewsHeadline.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/pojo/NewsHeadline.java) | 新闻头条实体类，包含新闻标题、内容、类型等字段 |
-| [pojo/NewsType.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/pojo/NewsType.java) | 新闻类型实体类，包含新闻分类信息 |
-| [pojo/NewsUser.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/pojo/NewsUser.java) | 用户实体类，包含用户基本信息 |
-| [pojo/HeadlineDetailVo.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/pojo/HeadlineDetailVo.java) | 新闻详情视图对象 |
-| [pojo/HeadlinePageVo.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/pojo/HeadlinePageVo.java) | 新闻分页视图对象 |
-| [pojo/HeadlineQueryVo.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/pojo/HeadlineQueryVo.java) | 新闻查询视图对象 |
+## 核心功能模块
 
-### 6. 业务逻辑层
+### 1. 用户模块（`/user/*`）
 
-| 文件路径 | 作用 |
-|---------|------|
-| [service/NewsHeadLineService.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/service/NewsHeadLineService.java) | 新闻头条业务接口 |
-| [service/NewsTypeService.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/service/NewsTypeService.java) | 新闻类型业务接口 |
-| [service/NewsUserService.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/service/NewsUserService.java) | 用户业务接口 |
-| [service/impl/NewsHeadLineServiceImpl.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/service/impl/NewsHeadLineServiceImpl.java) | 新闻头条业务实现类 |
-| [service/impl/NewsTypeServiceImpl.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/service/impl/NewsTypeServiceImpl.java) | 新闻类型业务实现类 |
-| [service/impl/NewsUserServiceImpl.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/service/impl/NewsUserServiceImpl.java) | 用户业务实现类 |
+| 接口路径 | 请求方式 | 功能说明 |
+|----------|----------|----------|
+| `/user/login` | POST | 用户登录，返回 JWT Token |
+| `/user/getUserInfo` | GET | 根据 Token 获取当前登录用户信息 |
+| `/user/checkUserName` | GET | 注册时校验用户名是否已被占用 |
+| `/user/regist` | POST | 用户注册（密码 MD5 加密） |
 
-### 7. 工具类
+**登录流程：**
+1. 前端提交用户名和密码
+2. 后端校验用户名是否存在
+3. 校验密码（MD5 加密后比对）
+4. 生成 JWT Token 返回给前端
+5. 前端后续请求携带 Token 进行身份认证
 
-| 文件路径 | 作用 |
-|---------|------|
-| [util/JDBCUtil.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/util/JDBCUtil.java) | 数据库连接工具类，基于Druid连接池和ThreadLocal |
-| [util/JwtHelper.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/util/JwtHelper.java) | JWT令牌工具类，用于用户认证和授权 |
-| [util/MD5Util.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/util/MD5Util.java) | MD5加密工具类 |
-| [util/WebUtil.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/util/WebUtil.java) | Web请求处理工具类 |
+### 2. 门户模块（`/portal/*`）—— 无需登录
 
-### 8. 过滤器
+| 接口路径 | 请求方式 | 功能说明 |
+|----------|----------|----------|
+| `/portal/findAllTypes` | GET | 查询所有新闻分类 |
+| `/portal/findNewsPage` | POST | 分页条件查询新闻列表 |
+| `/portal/showHeadlineDetail` | GET | 查询单个新闻详情（浏览量+1） |
 
-| 文件路径 | 作用 |
-|---------|------|
-| [filters/CrosFilter.java](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/filters/CrosFilter.java) | 跨域请求过滤器，处理CORS跨域问题 |
+**新闻分页查询支持条件：**
+- `keyWords`：按标题关键词模糊搜索
+- `type`：按新闻类型筛选
+- `pageNum` / `pageSize`：分页参数
 
-### 9. 依赖库
+### 3. 新闻头条管理模块（`/headline/*`）—— 需登录
 
-| 文件路径 | 作用 |
-|---------|------|
-| web/WEB-INF/lib/druid-1.1.22.jar | Druid数据库连接池 |
-| web/WEB-INF/lib/jackson-*.jar | JSON处理库 |
-| web/WEB-INF/lib/jjwt-api-0.10.1.jar | JWT令牌处理 |
-| web/WEB-INF/lib/lombok-1.18.24.jar | 简化Java代码 |
-| web/WEB-INF/lib/mysql-connector-java-8.0.25.jar | MySQL数据库驱动 |
+| 接口路径 | 请求方式 | 功能说明 |
+|----------|----------|----------|
+| `/headline/publish` | POST | 发布新闻 |
+| `/headline/findHeadlineByHid` | GET | 根据 ID 查询新闻（修改回显） |
+| `/headline/update` | POST | 更新新闻信息 |
+| `/headline/removeByHid` | GET | 删除新闻（逻辑删除） |
 
-## 🔗 文件调用关系
+> 该模块所有接口受 `LoginFilter` 保护，必须在请求头中携带有效的 `token`。
 
-### 1. 请求处理流程
+---
+
+## 架构设计
+
+### 三层架构
 
 ```
-HTTP请求
-  ↓
-CrosFilter (跨域处理)
-  ↓
-Controller (通过BaseController反射路由)
-  ↓
-Service (业务逻辑处理)
-  ↓
-Dao (数据访问)
-  ↓
-JDBCUtil (数据库连接)
-  ↓
-MySQL数据库
+┌─────────────────────────────────────┐
+│           Controller 层              │  ← Servlet 接收请求，返回 JSON
+│  (NewsUserController / PortalController ...) │
+├─────────────────────────────────────┤
+│           Service 层                 │  ← 业务逻辑处理
+│  (NewsUserServiceImpl / NewsHeadLineServiceImpl ...) │
+├─────────────────────────────────────┤
+│           DAO 层                     │  ← 数据库访问
+│  (NewsUserDaoImpl / NewsHeadLineDaoImpl ...) │
+├─────────────────────────────────────┤
+│           BaseDao                    │  ← 通用 JDBC 封装（反射映射实体）
+└─────────────────────────────────────┘
 ```
 
-### 2. 核心调用关系
+### 请求分发机制
 
-#### Controller层调用关系
-- 所有Controller继承 [BaseController](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/controller/BaseController.java)
-- [BaseController](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/controller/BaseController.java) 使用反射动态调用子类方法
-- Controller调用Service层处理业务逻辑
-- Controller使用 [Result](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/common/Result.java) 封装返回结果
+项目没有使用 Spring MVC，而是通过自定义的 [BaseController](src/com/yujun/mtt/controller/BaseController.java) 实现请求分发：
 
-#### Service层调用关系
-- Service接口定义业务方法
-- ServiceImpl实现类调用对应的Dao接口
-- Service可能使用 [JwtHelper](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/util/JwtHelper.java) 进行用户认证
-- Service可能使用 [MD5Util](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/util/MD5Util.java) 进行密码加密
+- 利用 Servlet 的 `service()` 方法拦截所有请求
+- 通过反射解析 URL 最后一个路径段作为方法名
+- 动态调用对应的业务方法，实现类似 Spring MVC 的 `@RequestMapping` 效果
 
-#### Dao层调用关系
-- Dao接口定义数据访问方法
-- DaoImpl实现类使用 [JDBCUtil](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/util/JDBCUtil.java) 获取数据库连接
-- Dao操作对应的Pojo实体类
+### 安全机制
 
-#### 工具类调用关系
-- [JDBCUtil](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/util/JDBCUtil.java) 读取 [jdbc.properties](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/resources/jdbc.properties) 配置
-- [JDBCUtil](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/util/JDBCUtil.java) 使用Druid连接池管理连接
-- [JwtHelper](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/util/JwtHelper.java) 使用jjwt库生成和解析JWT令牌
+1. **JWT 认证**
+   - 登录成功后生成 Token，有效期 24 小时
+   - 受保护接口通过请求头 `token` 校验身份
+   - Token 解析用户 ID，用于关联操作（如发布新闻时自动设置发布人）
 
-### 3. 数据流向
+2. **跨域处理（CORS）**
+   - [CrosFilter](src/com/yujun/mtt/filters/CrosFilter.java) 拦截所有请求
+   - 设置 `Access-Control-Allow-Origin: *`
+   - 自动处理 OPTIONS 预检请求
 
+3. **密码加密**
+   - 用户密码使用 MD5 单向加密存储
+   - 注册和登录时均进行加密比对
+
+---
+
+## 配置文件说明
+
+### jdbc.properties
+
+```properties
+driverClassName=com.mysql.cj.jdbc.Driver
+url=jdbc:mysql://localhost:3306/mtt
+username=root
+password=你的密码
+initialSize=5
+maxActive=10
+maxWait=1000
 ```
-前端请求 → Controller → Service → Dao → JDBCUtil → MySQL
-                    ↓           ↓        ↓
-                  Result      Pojo    Connection
-                    ↓           ↓        ↓
-                JSON响应    实体对象   数据库操作
+
+> 请根据本地数据库环境修改 `url`、`username`、`password`。
+
+### web.xml
+
+配置了 `LoginFilter`，拦截 `/headline/*` 路径，对新闻管理接口进行登录校验：
+
+```xml
+<filter-mapping>
+    <filter-name>loginFilter</filter-name>
+    <url-pattern>/headline/*</url-pattern>
+</filter-mapping>
 ```
 
-### 4. 配置文件依赖
+---
 
-- [jdbc.properties](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/resources/jdbc.properties) 被 [JDBCUtil](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/src/com/yujun/mtt/util/JDBCUtil.java) 读取
-- [web.xml](file:///Users/qiangyujun/Desktop/study/admin/mtt-rd/web/WEB-INF/web.xml) 配置Servlet和Filter
+## 快速启动
 
-## 🎯 架构特点
+### 环境要求
 
-1. **分层架构**：清晰的MVC分层，Controller-Service-Dao三层分离
-2. **RESTful设计**：通过BaseController实现基于URL方法名的路由
-3. **统一响应**：使用Result类统一API响应格式
-4. **连接池管理**：使用Druid连接池和ThreadLocal管理数据库连接
-5. **JWT认证**：基于JWT的无状态用户认证
-6. **跨域支持**：通过CrosFilter处理CORS跨域问题
+- JDK 17+
+- MySQL 8.0+
+- Tomcat 10.1+
+- IntelliJ IDEA（推荐）
 
-这是一个典型的Java Web项目结构，适合中小型应用开发，代码结构清晰，职责分明。
-        
+### 部署步骤
+
+1. **克隆/导入项目**
+   - 使用 IntelliJ IDEA 打开项目目录
+
+2. **初始化数据库**
+   - 创建数据库 `mtt`
+   - 执行建表 SQL（`news_user`、`news_headline`、`news_type`）
+
+3. **修改数据库配置**
+   - 编辑 `resources/jdbc.properties`，填写正确的数据库连接信息
+
+4. **配置 Tomcat**
+   - 在 IDEA 中添加 Tomcat 10.1+ 本地服务器
+   - 部署 `mtt-rd` 模块（注意使用 Jakarta EE 版本）
+
+5. **启动运行**
+   - 启动 Tomcat 服务
+   - 访问 `http://localhost:8080/`（具体端口根据配置）
+
+---
+
+## 接口响应格式
+
+所有接口统一返回 JSON 格式：
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": { ... }
+}
+```
+
+### 状态码说明
+
+| 状态码 | 含义 |
+|--------|------|
+| 200 | 操作成功 |
+| 501 | 用户名错误 |
+| 503 | 密码错误 |
+| 504 | 未登录 / Token 过期 |
+| 505 | 用户名已被占用 |
+
+---
+
+## 项目亮点
+
+- **纯原生实现**：不依赖 Spring/SpringBoot，深入理解 Java Web 底层原理
+- **反射通用 DAO**：[BaseDao](src/com/yujun/mtt/dao/BaseDao.java) 通过反射自动将 ResultSet 映射为实体对象，大幅减少重复代码
+- **动态 SQL 拼接**：新闻分页查询支持多条件动态组合
+- **ThreadLocal 连接管理**：[JDBCUtil](src/com/yujun/mtt/util/JDBCUtil.java) 使用 ThreadLocal 保证同线程内数据库连接唯一性
+- **逻辑删除**：新闻删除采用 `is_deleted` 标志位，保留数据可追溯
+
+---
+
+## 作者
+
+- **开发者**：yujun
+- **包名**：`com.yujun.mtt`
+
+---
+
+## 许可证
+
+本项目为学习演示用途，仅供参考。

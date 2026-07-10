@@ -28,6 +28,7 @@ public class NewsUserController extends BaseController{
      * @throws IOException
      */
     protected void login(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // 从请求中获取 JSON 字符串并转换为 NewsUser 对象
         NewsUser newsUser = WebUtil.readJson(req, NewsUser.class);
         Result result =null;
         NewsUser loginNewsUser = newsUserService.findByUserName(newsUser.getUsername());

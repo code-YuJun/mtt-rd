@@ -3,6 +3,10 @@ package com.yujun.mtt.util;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+/**
+ * MD5 加密工具类
+ * 使用：MD5Util.encrypt("123456")
+ */
 public final class MD5Util {
     public static String encrypt(String strSrc) {
         try {

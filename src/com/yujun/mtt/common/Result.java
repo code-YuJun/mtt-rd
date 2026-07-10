@@ -18,13 +18,21 @@ public class Result<T> {
     public Result(){}
 
     // 返回数据
+    /**
+    * 写了这个方法，就不用每次手动 new Result<T>(); 和 result.setData(data); 了
+     * User user = new User();
+     * Result<User> result = build(user);
+    */
     protected static <T> Result<T> build(T data) {
         Result<T> result = new Result<T>();
-        if (data != null)
-            result.setData(data);
+        if (data != null) result.setData(data);
         return result;
     }
 
+    /**
+     * 构建返回结果：data、code、message
+     *  Result.build(user,200,"成功");
+     */
     public static <T> Result<T> build(T body, Integer code, String message) {
         Result<T> result = build(body);
         result.setCode(code);
@@ -32,6 +40,9 @@ public class Result<T> {
         return result;
     }
 
+    /**
+     *  Result.build(user,ResultCodeEnum.SUCCESS);
+     */
     public static <T> Result<T> build(T body, ResultCodeEnum resultCodeEnum) {
         Result<T> result = build(body);
         result.setCode(resultCodeEnum.getCode());
@@ -49,7 +60,15 @@ public class Result<T> {
         Result<T> result = build(data);
         return build(data, ResultCodeEnum.SUCCESS);
     }
-
+    // 链式调用
+    /**
+     * Result.ok(user).message("成功").code(201);
+     * 相当于：
+     * Result<User> result = Result.ok(user);
+     * result.setMessage("登录成功");
+     * result.setCode(201);
+     * return result;
+     */
     public Result<T> message(String msg){
         this.setMessage(msg);
         return this;

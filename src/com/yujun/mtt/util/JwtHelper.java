@@ -11,7 +11,7 @@ public class JwtHelper {
     // token签名密钥
     private static String tokenSignKey = "123456";
 
-    //生成token字符串
+    //生成token字符串，根据用户 id 创建一个 Token
     public static String createToken(Long userId) {
         String token = Jwts.builder()
                 .setSubject("YYGH-USER")
@@ -50,3 +50,9 @@ public class JwtHelper {
         }
     }
 }
+/**
+ * 使用：
+ * 1. 生成token：createToken(Long userId)
+ * 2. 从token中获取userId：getUserId(String token)
+ * 3. 判断token是否有效：isExpiration(String token)
+ */

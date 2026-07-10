@@ -9,12 +9,19 @@ import java.io.BufferedReader;
 import java.text.SimpleDateFormat;
 import java.io.IOException;
 
+/**
+ * Web 工具类，负责 HTTP 请求中的 JSON 和 Java 对象之间的相互转换。
+ * 请求（Request）：把前端发送的 JSON 转成 Java 对象。
+ * 响应（Response）：把 Java 对象转成 JSON 返回给前端。
+ */
 public class WebUtil {
+    // JSON 翻译器，负责 JSON 和 Java 对象之间的转换
     private static ObjectMapper objectMapper;
 
     // 初始化objectMapper
+    // 程序第一次加载 WebUtil 时：创建一个 ObjectMapper。
     static{
-        objectMapper=new ObjectMapper();
+        objectMapper = new ObjectMapper();
         // 设置JSON和Object转换时的时间日期格式
         objectMapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
     }

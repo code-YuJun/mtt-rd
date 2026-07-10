@@ -12,10 +12,22 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * BaseDao 的作用就是把所有 Dao 都会重复写的 JDBC 代码抽取出来，让其他 Dao 直接调用。
+ * 如果没有 BaseDao，每个 Dao 都要重复写：获取连接、创建PreparedStatement、设置参数、执行SQL、封装结果、关闭资源。
+ */
 public class BaseDao {
-    // 公共的查询方法  返回的是单个对象
+    /**
+     * 查询一个值（单个对象）
+     * @param clazz 返回的数据类型，例如 Integer.class，返回 Integer。
+     * @param sql
+     * @param args 可变参数，sql 查询参数不固定，所以用可变参数。
+     * @return
+     * @param <T>
+     */
     public <T> T baseQueryObject(Class<T> clazz, String sql, Object ... args) {
         T t = null;
+        // 获取数据库连接
         Connection connection = JDBCUtil.getConnection();
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
@@ -23,11 +35,10 @@ public class BaseDao {
         try {
             // 准备语句对象
             preparedStatement = connection.prepareStatement(sql);
-            // 设置语句上的参数
+            // 吧传入的参数传递给 sql 语句
             for (int i = 0; i < args.length; i++) {
                 preparedStatement.setObject(i + 1, args[i]);
             }
-
             // 执行 查询
             resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -54,7 +65,8 @@ public class BaseDao {
         }
         return t;
     }
-    // 公共的查询方法  返回的是对象的集合
+
+    // 查询多条记录，并自动封装成对象
     public <T> List<T> baseQuery(Class clazz, String sql, Object ... args){
         List<T> list =new ArrayList<>();
         Connection connection = JDBCUtil.getConnection();
@@ -113,6 +125,8 @@ public class BaseDao {
         }
         return list;
     }
+
+    // 执行增删改操作
     public int baseUpdate(String sql,Object ... args) {
         // 获取连接
         Connection connection = JDBCUtil.getConnection();
@@ -125,7 +139,6 @@ public class BaseDao {
             for (int i = 0; i < args.length; i++) {
                 preparedStatement.setObject(i+1,args[i]);
             }
-
             // 执行 增删改 executeUpdate
             rows = preparedStatement.executeUpdate();
             // 释放资源(可选)

@@ -2,15 +2,15 @@ package com.yujun.mtt.common;
 
 /**
  * 统一返回结果状态信息类
+ * 使用：ResultCodeEnum.SUCCESS.getCode()
  */
 public enum ResultCodeEnum {
-
+    // 等价于：new ResultCodeEnum(200, "成功");
     SUCCESS(200,"success"),
     USERNAME_ERROR(501,"usernameError"),
     PASSWORD_ERROR(503,"passwordError"),
     NOTLOGIN(504,"notLogin"),
-    USERNAME_USED(505,"userNameUsed")
-    ;
+    USERNAME_USED(505,"userNameUsed");
 
     private Integer code;
     private String message;
